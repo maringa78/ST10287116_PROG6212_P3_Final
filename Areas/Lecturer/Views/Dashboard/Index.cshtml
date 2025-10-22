@@ -1,0 +1,170 @@
+﻿@{
+    // Ensure this area view uses the shared layout so CSS/JS from _Layout are applied
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using ST10287116_PROG6212_POE_P2.Models
+@model IEnumerable<ST10287116_PROG6212_POE_P2.Models.Claim>
+@{
+    ViewData["Title"] = "Dashboard - ClaimIT";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+        </div>
+        @* force login link to the root Account controller (no area) *@
+        @if (Context.Session.GetString("UserId") == null)
+        {
+            <a asp-area="" asp-controller="Account" asp-action="Login" class="btn btn-sm btn-primary ms-2">Login</a>
+        }
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Claim Submission Form</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Submit" asp-controller="Claims" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Claim Type</label>
+                        <select asp-for="Type" class="form-select" required>
+                            <option>Select claim type</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Research">Research</option>
+                            <option value="Conference">Conference</option>
+                            <option value="Development">Development</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Claim Date</label>
+                        <input type="date" class="form-control" asp-for="ClaimDate" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount (e.g., 250.00)</label>
+                        <input type="number" step="0.01" class="form-control" asp-for="Amount" placeholder="250.00" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" asp-for="Description" placeholder="Provide a detailed description of your claim..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Supporting Documents</label>
+                        <div class="dropzone border p-3 text-center" id="dropzone">
+                            <i class="fas fa-cloud-upload-alt fs-1 text-muted mb-2"></i>
+                            <p>Drag & drop files here, or browse</p>
+                            <small>Max 5MB per file, PDF or image format</small>
+                            <input type="file" class="form-control mt-2 d-none" multiple accept=".pdf,.jpg,.png" id="fileInput" />
+                            <button type="button" class="btn btn-outline-secondary mt-2">Choose Files</button>
+                            <div id="fileList" class="mt-2 text-muted"></div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Claim</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Claim Status</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Claim Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model.Take(5))
+                            {
+                                <tr>
+                                    <td>@item.ClaimId</td>
+                                    <td>@item.ClaimDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@item.Type</td>
+                                    <td>R@item.Amount</td>
+                                    <td><span class="badge @(item.Status == ClaimStatus.Approved ? "bg-success" : item.Status == ClaimStatus.Pending ? "bg-warning" : "bg-danger")">@item.Status</span></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No claims submitted yet</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between p-2 small text-muted">
+                    <a href="#">Previous</a>
+                    <a href="#">1</a>
+                    <a href="#">Next</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Dropzone JS (drag-drop animation)
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const chooseBtn = dropzone.querySelector('button');
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.add('highlight'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.remove('highlight'), false);
+        });
+
+        dropzone.addEventListener('drop', handleDrop, false);
+        function handleDrop(e) {
+            const files = e.dataTransfer.files;
+            fileInput.files = files;
+            updateFileDisplay(files);
+        }
+
+        chooseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => updateFileDisplay(e.target.files));
+
+        function updateFileDisplay(files) {
+            if (files.length > 0) {
+                fileList.innerHTML = `${files.length} file(s) selected`;
+            } else {
+                fileList.innerHTML = '';
+            }
+        }
+    </script>
+    <style>
+        .highlight {
+            border-color: var(--primary-blue);
+            background-color: #e3f2fd;
+        }
+    </style>
+}

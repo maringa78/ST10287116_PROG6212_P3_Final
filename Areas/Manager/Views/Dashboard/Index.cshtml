@@ -1,0 +1,67 @@
+﻿@using ST10287116_PROG6212_POE_P2.Models
+@model IEnumerable<ST10287116_PROG6212_POE_P2.Models.Claim>
+@{
+    ViewData["Title"] = "Manager Dashboard - ClaimIT";
+    // Force area view to use the shared layout so CSS/JS from _Layout are applied
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Manager Dashboard</h1>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <input type="text" class="form-control w-25" placeholder="Search claims by ID or claimant..." />
+        <select class="form-select w-auto">
+            <option>All Statuses</option>
+            <option>Pending</option>
+            <option>Approved</option>
+        </select>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Claim Date</th>
+                        <th>Claimant</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.ClaimId</td>
+                            <td>@item.ClaimDate.ToString("yyyy-MM-dd")</td>
+                            <td>@item.Description.Split(' ').FirstOrDefault() ?? "User"</td>  <!-- Mock claimant -->
+                            <td>R@item.Amount</td>
+                            <td><span class="badge @(item.Status == ClaimStatus.Approved ? "bg-success" : item.Status == ClaimStatus.Pending ? "bg-warning" : "bg-danger")">@item.Status</span></td>
+                            <td>
+                                @if (item.Status == ClaimStatus.Pending)
+                                {
+                                    <form asp-action="Approve" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                    </form>
+                                    <form asp-action="Reject" method="post" class="d-inline ms-1">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Actioned</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

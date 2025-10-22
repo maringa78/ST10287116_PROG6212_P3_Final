@@ -1,0 +1,39 @@
+﻿@model ST10287116_PROG6212_POE_P2.Models.Claim
+@{
+    ViewData["Title"] = "Claim Status - ClaimIT";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3>Claim Status</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6"><strong>Claim ID</strong></div>
+                        <div class="col-6">@Model.ClaimId</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6"><strong>Hours Worked</strong></div>
+                        <div class="col-6">@Model.HoursWorked hours</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6"><strong>Claim Month</strong></div>
+                        <div class="col-6">@Model.ClaimMonth</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6"><strong>Status</strong></div>
+                        <div class="col-6"><span class="badge bg-success">@Model.Status</span></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6"><strong>Last Updated</strong></div>
+                        <div class="col-6">@Model.LastUpdated.ToString("yyyy-MM-dd HH:mm")</div>
+                    </div>
+                    <a href="#" class="btn btn-primary mt-3">&larr; Back to Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

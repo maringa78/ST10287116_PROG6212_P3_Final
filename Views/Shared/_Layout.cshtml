@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ClaimIT</title>
+    <link rel="stylesheet" href="@(Url.Content("~/lib/bootstrap/dist/css/bootstrap.min.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/css/site.css"))" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="navbar-brand">&#9733; ClaimIT</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a asp-area="Lecturer" asp-controller="Dashboard" asp-action="Index" class="nav-link">Dashboard</a>
+                        </li>
+                        <li class="nav-item"><a asp-area="" asp-controller="Claims" asp-action="Submit" class="nav-link">Submit Claim</a>
+                        </li>
+                        <li class="nav-item"><a asp-area="Coordinator" asp-controller="Track" asp-action="Index" class="nav-link">Coordinator</a>
+                        </li>
+                        <li class="nav-item"><a asp-area="Manager" asp-controller="Dashboard" asp-action="Index" class="nav-link">Manager</a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav ms-auto">
+                        @if (Context.Session.GetString("UserId") != null)
+                        {
+                        <li class="nav-item"><a asp-controller="Account" asp-action="Logout" class="nav-link">Logout</a></li>
+                        }
+                        else
+                        {
+                        @* Use asp-area="" so link targets the root Account controller (avoids /Lecturer/Account/Login) *@
+                        <li class="nav-item"><a asp-area="" asp-controller="Account" asp-action="Login" class="nav-link">Login</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            @if (Context.Session.GetString("Role") == "Lecturer")
+            {
+            <partial name="_LecturerSidebar" />
+            }
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">Resources</div>
+                <div class="col-md-4">Legal</div>
+                <div class="col-md-4">Contact Us</div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="@(Url.Content("~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"))"></script>
+    <script src="@(Url.Content("~/js/site.js"))"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="/_framework/aspnetcore-browser-refresh.js"></script>
+</body>
+
+</html>
