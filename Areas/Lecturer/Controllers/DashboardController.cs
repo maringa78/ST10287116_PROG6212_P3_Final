@@ -6,14 +6,9 @@ using ST10287116_PROG6212_POE_P2.Models;
 namespace ST10287116_PROG6212_POE_P2.Areas.Lecturer.Controllers
 {
     [Area("Lecturer")]
-    public class DashboardController : Controller
+    public class DashboardController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public DashboardController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         public IActionResult Index()
         {
