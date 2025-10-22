@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using ST10287116_PROG6212_POE_P2.Models;
 
 namespace ST10287116_PROG6212_POE_P2.Areas.Lecturer.Controllers
@@ -12,22 +13,16 @@ namespace ST10287116_PROG6212_POE_P2.Areas.Lecturer.Controllers
 
         public IActionResult Index()
         {
-            // Prefer showing claims for the signed-in user; fall back to lecturerId if no session user.
             string? userId = HttpContext.Session.GetString("UserId");
             int lecturerId = 1;
 
-            var query = _context.Claims.AsQueryable();
+            // Fallback to the default user id used on claim creation
+            if (string.IsNullOrEmpty(userId))
+                userId = "1";
 
-            if (!string.IsNullOrEmpty(userId))
-            {
-                query = query.Where(c => c.UserId == userId || c.LecturerId == lecturerId);
-            }
-            else
-            {
-                query = query.Where(c => c.LecturerId == lecturerId);
-            }
-
-            var claims = query
+            var claims = _context.Claims
+                .AsNoTracking()
+                .Where(c => c.UserId == userId || c.LecturerId == lecturerId)
                 .OrderByDescending(c => c.ClaimDate)
                 .ToList();
 

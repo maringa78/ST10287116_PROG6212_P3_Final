@@ -4,14 +4,9 @@ using ST10287116_PROG6212_POE_P2.Models;
 
 namespace ST10287116_PROG6212_POE_P2.Controllers
 {
-    public class ClaimsController : Controller
+    public class ClaimsController(ClaimService claimService) : Controller
     {
-        private readonly ClaimService _claimService;
-
-        public ClaimsController(ClaimService claimService)
-        {
-            _claimService = claimService;
-        }
+        private readonly ClaimService _claimService = claimService;
 
         [HttpGet]
         public IActionResult Submit()
@@ -28,15 +23,17 @@ namespace ST10287116_PROG6212_POE_P2.Controllers
                 return View(model);
             }
 
-            // set defaults and user id from session if available
             model.ClaimDate = model.ClaimDate == default ? DateTime.Now : model.ClaimDate;
             model.Status = ClaimStatus.Pending;
+
             var userId = HttpContext.Session.GetString("UserId");
             model.UserId = string.IsNullOrEmpty(userId) ? "1" : userId;
 
+            // Ensure lecturer filter shows these claims
+            model.LecturerId = 1;
+
             _claimService.CreateClaim(model);
 
-            // redirect to lecturer dashboard after submit
             return RedirectToAction("Index", "Dashboard", new { area = "Lecturer" });
         }
     }
