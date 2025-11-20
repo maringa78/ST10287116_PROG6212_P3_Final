@@ -1,13 +1,14 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using ST10287116_PROG6212_POE_P2.Services;
 using ST10287116_PROG6212_POE_P2.Models;
 
 namespace ST10287116_PROG6212_POE_P2.Areas.Lecturer.Controllers
 {
     [Area("Lecturer")]
+    [Authorize(Roles = "Lecturer")]
     public class DashboardController : Controller
     {
         private readonly ClaimService _claimService;
@@ -20,6 +21,9 @@ namespace ST10287116_PROG6212_POE_P2.Areas.Lecturer.Controllers
         public IActionResult Index()
         {
             var userId = HttpContext.Session.GetString("UserId") ?? "1";
+            if (string.IsNullOrEmpty(userId))
+                return RedirectToAction("Login", "Account");
+
             var claims = _claimService.GetUserClaims(userId);
             return View(claims); // View is strongly typed to IEnumerable<Claim>
         }

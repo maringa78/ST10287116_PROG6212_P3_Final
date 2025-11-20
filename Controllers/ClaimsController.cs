@@ -8,10 +8,12 @@ namespace ST10287116_PROG6212_POE_P2.Controllers
     public class ClaimsController : Controller
     {
         private readonly ClaimService _claimService;
+        private readonly ApplicationDbContext _claimServiceContext; // NEW: Dependency for context
 
-        public ClaimsController(ClaimService claimService)
+        public ClaimsController(ClaimService claimService, ApplicationDbContext claimServiceContext)
         {
             _claimService = claimService;
+            _claimServiceContext = claimServiceContext; // NEW: Initialize context
         }
 
         [HttpGet]
@@ -32,7 +34,23 @@ namespace ST10287116_PROG6212_POE_P2.Controllers
             model.ClaimDate = model.ClaimDate == default ? DateTime.Now : model.ClaimDate;
             model.Status = ClaimStatus.Pending;  // Initial status for workflow (coordinator verifies next)
             var userId = HttpContext.Session.GetString("UserId");
-            model.UserId = string.IsNullOrEmpty(userId) ? "1" : userId;
+            if (string.IsNullOrEmpty(userId))
+                return RedirectToAction("Login", "Account");
+
+            model.UserId = userId;
+
+            // Fetch lecturer for rate
+            var lecturer = _claimServiceContext.User.FirstOrDefault(u => u.Id.ToString() == userId);
+            // If you do not have _claimServiceContext here, inject ApplicationDbContext; or expose a helper in ClaimService.
+
+            int lecturerIntId = lecturer?.Id ?? 0;
+            var monthHours = _claimService.GetMonthlyHoursForUser(lecturerIntId, DateTime.Now.Year, DateTime.Now.Month);
+            if (monthHours + model.HoursWorked > 180)
+            {
+                ModelState.AddModelError("", "Monthly hour limit (180) exceeded.");
+                return View(model);
+            }
+
             model.LecturerId = 1;  // Ensure lecturer filter
             model.Created = DateTime.Now;
             model.LastUpdated = DateTime.Now;

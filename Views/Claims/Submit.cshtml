@@ -37,7 +37,21 @@
             <textarea asp-for="Description" class="form-control"></textarea>
             <span asp-validation-for="Description" class="text-danger"></span>
         </div>
-
+        <div>
+            <label>Hourly Rate</label>
+            <span>@ViewBag.HourlyRate</span>
+            <input type="hidden" asp-for="HourlyRate" />
+        </div>
+        <script>
+            // Auto-calc total on hours input change
+            const hoursInput = document.getElementById('HoursWorked');
+            const totalSpan = document.getElementById('TotalAmountDisplay');
+            const rate = parseFloat('@ViewBag.HourlyRate');
+            hoursInput.addEventListener('input', () => {
+                const h = parseInt(hoursInput.value || '0');
+                totalSpan.textContent = (h * rate).toFixed(2);
+            });
+        </script>
         <button type="submit" class="btn btn-primary">Submit Claim</button>
     </form>
 </div>

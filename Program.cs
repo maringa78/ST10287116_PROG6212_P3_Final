@@ -29,7 +29,7 @@ namespace ST10287116_PROG6212_POE_P2
                 options.AddPolicy("Lecturer", p => p.RequireRole("Lecturer"));
                 options.AddPolicy("Coordinator", p => p.RequireRole("Coordinator"));
                 options.AddPolicy("Manager", p => p.RequireRole("Manager"));
-                // options.AddPolicy("HR", p => p.RequireRole("HR")); // only if you add HR to enum and seed users
+                options.AddPolicy("HR", p => p.RequireRole("HR"));
             });
 
             builder.Services.AddDistributedMemoryCache();
@@ -87,11 +87,11 @@ namespace ST10287116_PROG6212_POE_P2
                 {
                     // If your User model DOES NOT have Name/Surname, replace with Username property or add those properties.
                     context.User.AddRange(
-                        new User { Username = "Admin HR", Email = "hr@test.com", PasswordHash = "pass123", Role = UserRole.Manager, HourlyRate = 0m },
-                        new User { Username = "John Doe", Email = "lecturer@test.com", PasswordHash = "pass123", Role = UserRole.Lecturer, HourlyRate = 25m },
-                        new User { Username = "Jane Smith", Email = "coordinator@test.com", PasswordHash = "pass123", Role = UserRole.Coordinator, HourlyRate = 0m },
-                        new User { Username = "Bob Manager", Email = "manager@test.com", PasswordHash = "pass123", Role = UserRole.Manager, HourlyRate = 0m }
-                    );
+            new User { Name = "Alice", Surname = "HR", Username = "Alice HR", Email = "hr@test.com", PasswordHash = "pass123", Role = UserRole.HR, HourlyRate = 0m },
+            new User { Name = "John", Surname = "Doe", Username = "John Doe", Email = "lecturer@test.com", PasswordHash = "pass123", Role = UserRole.Lecturer, HourlyRate = 25m },
+            new User { Name = "Jane", Surname = "Smith", Username = "Jane Smith", Email = "coordinator@test.com", PasswordHash = "pass123", Role = UserRole.Coordinator, HourlyRate = 0m },
+            new User { Name = "Bob", Surname = "Manager", Username = "Bob Manager", Email = "manager@test.com", PasswordHash = "pass123", Role = UserRole.Manager, HourlyRate = 0m }
+        );
                     context.SaveChanges();
                 }
             }

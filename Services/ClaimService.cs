@@ -1,4 +1,5 @@
 ﻿using ST10287116_PROG6212_POE_P2.Models;
+using ST10287116_PROG6212_POE_P2.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace ST10287116_PROG6212_POE_P2.Services
@@ -6,16 +7,19 @@ namespace ST10287116_PROG6212_POE_P2.Services
     public class ClaimService
     {
         private readonly ApplicationDbContext _context;
+        public ClaimService(ApplicationDbContext context) => _context = context;
 
-        public ClaimService(ApplicationDbContext context)
+        public int GetMonthlyHoursForUser(int userId, int year, int month)
         {
-            _context = context;
+            return _context.Claims
+                .Where(c => c.LecturerId == userId &&
+                            c.ClaimDate.Year == year &&
+                            c.ClaimDate.Month == month)
+                .Sum(c => c.HoursWorked);
         }
 
-        public IEnumerable<Claim> GetUserClaims(string userId)
-        {
-            return _context.Claims.Where(c => c.UserId == userId).ToList();
-        }
+        public IEnumerable<Claim> GetUserClaims(string userId) =>
+            _context.Claims.Where(c => c.UserId == userId).ToList();
 
         public IEnumerable<Claim> GetAllClaims(string? search = "")
         {
@@ -66,26 +70,21 @@ namespace ST10287116_PROG6212_POE_P2.Services
 
         public void CreateClaim(Claim claim)
         {
-           
             if (!string.IsNullOrWhiteSpace(claim.UserId))
             {
-                var lecturer = _context.Set<User>().FirstOrDefault(u => u.Id.ToString() == claim.UserId);
+                var lecturer = _context.User.FirstOrDefault(u => u.Id.ToString() == claim.UserId);
                 if (lecturer != null)
                 {
                     claim.HourlyRate = lecturer.HourlyRate;
+                    claim.LecturerId = lecturer.Id;
                 }
             }
-
-            // Auto-calc total based on hours and HR rate
             claim.TotalAmount = claim.HourlyRate * claim.HoursWorked;
-
-            // Audit fields
             claim.Created = DateTime.Now;
             claim.LastUpdated = DateTime.Now;
 
             _context.Claims.Add(claim);
-
-            if (claim.Documents != null && claim.Documents.Count > 0)
+            if (claim.Documents?.Count > 0)
             {
                 _context.Set<Document>().AddRange(claim.Documents);
             }
