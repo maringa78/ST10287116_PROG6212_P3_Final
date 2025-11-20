@@ -12,5 +12,7 @@ namespace ST10287116_PROG6212_POE_P2.Models
         [Required]
         public string PasswordHash { get; set; } = string.Empty;  // Hash in service
         public UserRole Role { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal HourlyRate { get; set; } = 25.00m;
     }
 }
