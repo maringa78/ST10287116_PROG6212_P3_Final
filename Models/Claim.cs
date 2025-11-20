@@ -68,7 +68,7 @@ namespace ST10287116_PROG6212_POE_P2.Models
         public string FileName { get; set; } = string.Empty;
 
         [Required, StringLength(500)]
-        public string FilePath { get; set; } = string.Empty;  // e.g., "/uploads/file.pdf" (viewable link)
+        public string FilePath { get; set; } = string.Empty;  
 
         public int ClaimId { get; set; }
 

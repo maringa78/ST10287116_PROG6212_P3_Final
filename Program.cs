@@ -1,8 +1,10 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using ST10287116_PROG6212_POE_P2.Services;
-using ST10287116_PROG6212_POE_P2.Models; // Add this for User / UserRole
+using ST10287116_PROG6212_POE_P2.Models; // For User / UserRole
+using ST10287116_PROG6212_POE_P2.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ST10287116_PROG6212_POE_P2
 {
@@ -10,52 +12,38 @@ namespace ST10287116_PROG6212_POE_P2
     {
         public static void Main(string[] args)
         {
+            // Ensure correct middleware order and Razor Pages removal (using MVC only)
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddRazorPages();
             builder.Services.AddControllersWithViews();
+            builder.Services.AddSession(o =>
+            {
+                o.IdleTimeout = TimeSpan.FromMinutes(30);
+                o.Cookie.HttpOnly = true;
+                o.Cookie.IsEssential = true;
+            });
 
-            // AuthN + AuthZ for role-protected areas/pages
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(o =>
                 {
                     o.LoginPath = "/Account/Login";
-                    o.AccessDeniedPath = "/Error/StatusCode?code=403";
+                    o.AccessDeniedPath = "/Account/Login";
                 });
 
-            builder.Services.AddAuthorization(options =>
+            builder.Services.AddAuthorization(opts =>
             {
-                // Match your enum: Lecturer, Coordinator, Manager (add HR if you introduce it)
-                options.AddPolicy("Lecturer", p => p.RequireRole("Lecturer"));
-                options.AddPolicy("Coordinator", p => p.RequireRole("Coordinator"));
-                options.AddPolicy("Manager", p => p.RequireRole("Manager"));
-                options.AddPolicy("HR", p => p.RequireRole("HR"));
+                // Force auth for all controllers unless [AllowAnonymous]
+                opts.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
             });
-
-            builder.Services.AddDistributedMemoryCache();
-            builder.Services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(30);
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
-
+            builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseInMemoryDatabase("AppInMemoryDb"));
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<ClaimService>();
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase("AppInMemoryDb"));
-
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Error");
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
+            // Middleware (keep order)
             app.UseStaticFiles();
             app.UseRouting();
             app.UseSession();
@@ -63,36 +51,32 @@ namespace ST10287116_PROG6212_POE_P2
             app.UseAuthorization();
 
             app.MapControllerRoute(
-                name: "root-to-lecturer",
-                pattern: "",
-                defaults: new { area = "Lecturer", controller = "Dashboard", action = "Index" });
-
-            app.MapControllerRoute(
                 name: "areas",
                 pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Account}/{action=Login}/{id?}");
 
-            app.MapRazorPages();
+            // Map a logout route that works even when the current URL is inside an Area
+            app.MapControllerRoute(
+                name: "logout-any-area",
+                pattern: "{area:exists}/Account/Logout",
+                defaults: new { controller = "Account", action = "Logout" });
 
-            // Seed data (place BEFORE app.Run)
             using (var scope = app.Services.CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                context.Database.EnsureCreated(); // InMemory: harmless
-
-                if (!context.User.Any())
+                var ctx = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                ctx.Database.EnsureCreated();
+                if (!ctx.Users.Any())
                 {
-                    // If your User model DOES NOT have Name/Surname, replace with Username property or add those properties.
-                    context.User.AddRange(
-            new User { Name = "Alice", Surname = "HR", Username = "Alice HR", Email = "hr@test.com", PasswordHash = "pass123", Role = UserRole.HR, HourlyRate = 0m },
-            new User { Name = "John", Surname = "Doe", Username = "John Doe", Email = "lecturer@test.com", PasswordHash = "pass123", Role = UserRole.Lecturer, HourlyRate = 25m },
-            new User { Name = "Jane", Surname = "Smith", Username = "Jane Smith", Email = "coordinator@test.com", PasswordHash = "pass123", Role = UserRole.Coordinator, HourlyRate = 0m },
-            new User { Name = "Bob", Surname = "Manager", Username = "Bob Manager", Email = "manager@test.com", PasswordHash = "pass123", Role = UserRole.Manager, HourlyRate = 0m }
-        );
-                    context.SaveChanges();
+                    ctx.Users.AddRange(
+                        new User { Name = "Alice", Surname = "HR", Email = "hr@test.com", PasswordHash = "pass123", Role = UserRole.HR, HourlyRate = 0m },
+                        new User { Name = "John", Surname = "Doe", Email = "lecturer@test.com", PasswordHash = "pass123", Role = UserRole.Lecturer, HourlyRate = 25m },
+                        new User { Name = "Jane", Surname = "Smith", Email = "coordinator@test.com", PasswordHash = "pass123", Role = UserRole.Coordinator, HourlyRate = 0m },
+                        new User { Name = "Bob", Surname = "Manager", Email = "manager@test.com", PasswordHash = "pass123", Role = UserRole.Manager, HourlyRate = 0m }
+                    );
+                    ctx.SaveChanges();
                 }
             }
 

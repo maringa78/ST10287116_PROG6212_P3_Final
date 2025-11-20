@@ -1,0 +1,24 @@
+@page
+@model ST10287116_PROG6212_POE_P2.Pages.Account.LoginModel
+@{
+    Layout = "_Layout";
+}
+<h2>Login</h2>
+@if (Model.Error != null)
+{
+    <div class="text-danger">@Model.Error</div>
+}
+<form method="post">
+    @Html.AntiForgeryToken()  <!-- Ensure token to prevent 400 -->
+    <div class="mb-3">
+        <label>Email</label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label>Password</label>
+        <input asp-for="Password" type="password" class="form-control" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+    <button class="btn btn-primary" type="submit">Login</button>
+</form>

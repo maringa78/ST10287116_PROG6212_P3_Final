@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ST10287116_PROG6212_POE_P2.Models  // Models namespace
+namespace ST10287116_PROG6212_POE_P2.Models
 {
     public class UserLogin
     {

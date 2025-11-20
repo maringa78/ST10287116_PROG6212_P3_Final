@@ -24,18 +24,32 @@
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item"><a asp-area="Lecturer" asp-controller="Dashboard" asp-action="Index" class="nav-link">Dashboard</a>
                         </li>
-                        <li class="nav-item"><a asp-area="" asp-controller="Claims" asp-action="Submit" class="nav-link">Submit Claim</a>
-                        </li>
-                        <li class="nav-item"><a asp-area="Coordinator" asp-controller="Track" asp-action="Index" class="nav-link">Coordinator</a>
-                        </li>
-                        <li class="nav-item"><a asp-area="Manager" asp-controller="Dashboard" asp-action="Index" class="nav-link">Manager</a>
-                        </li>
+                        @if (User.IsInRole("Lecturer"))
+                        {
+                            <li class="nav-item"><a asp-area="" asp-controller="Claims" asp-action="Submit" class="nav-link">Submit Claim</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Coordinator"))
+                        {
+                            <li class="nav-item"><a asp-area="Coordinator" asp-controller="Track" asp-action="Index" class="nav-link">Verify Claims</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Manager"))
+                        {
+                            <li class="nav-item"><a asp-area="Manager" asp-controller="Dashboard" asp-action="Index" class="nav-link">Manager Dashboard</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("HR"))
+                        {
+                            <li class="nav-item"><a asp-area="HR" asp-controller="User" asp-action="Index" class="nav-link">Users</a>
+                            </li>
+                        }   
                     </ul>
 
                     <ul class="navbar-nav ms-auto">
                         @if (Context.Session.GetString("UserId") != null)
                         {
-                        <li class="nav-item"><a asp-controller="Account" asp-action="Logout" class="nav-link">Logout</a></li>
+                        <li class="nav-item"><a asp-area="" asp-controller="Account" asp-action="Logout" class="nav-link">Logout</a></li>
                         }
                         else
                         {
@@ -50,9 +64,9 @@
 
     <div class="container-fluid">
         <div class="row">
-            @if (Context.Session.GetString("Role") == "Lecturer")
+            @if (User.IsInRole("Lecturer"))
             {
-            <partial name="_LecturerSidebar" />
+                <partial name="_LecturerSidebar" />
             }
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 @RenderBody()

@@ -37,7 +37,7 @@
                 </thead>
                 <tbody>
                     @{
-                        // Filter only Verified claims for manager review
+
                         var verifiedClaims = Model.Where(c => c.Status == ClaimStatus.Verified).ToList();
                     }
                     @if (!verifiedClaims.Any())
@@ -54,10 +54,10 @@
                             <tr>
                                 <td>@item.ClaimId</td>
                                 <td>@item.ClaimDate.ToString("yyyy-MM-dd")</td>
-                                <td>@(item.Description.Split(' ').FirstOrDefault() ?? "User")</td> <!-- Mock claimant -->
-                                <td>@item.HoursWorked</td> <!-- NEW: Hours field -->
-                                <td>R @item.HourlyRate.ToString("F2")</td> <!-- NEW: Rate field, formatted -->
-                                <td class="text-end">@item.TotalAmount.ToString("C")</td> <!-- Currency format -->
+                                <td>@(item.Description.Split(' ').FirstOrDefault() ?? "User")</td> 
+                                <td>@item.HoursWorked</td>
+                                <td>R @item.HourlyRate.ToString("F2")</td>
+                                <td class="text-end">@item.TotalAmount.ToString("C")</td> 
                                 <td>
                                     <span class="badge @(item.Status == ClaimStatus.Approved ? "bg-success" : item.Status == ClaimStatus.Verified ? "bg-info" : item.Status == ClaimStatus.Pending ? "bg-warning" : "bg-danger")">
                                         @item.Status

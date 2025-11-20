@@ -20,42 +20,59 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Where(c => c.Status == ClaimStatus.Pending))  // Only Pending
+        @if (!Model.Any())
         {
             <tr>
-                <td>@item.ClaimId</td>
-                <td>@item.ClaimDate.ToString("yyyy-MM-dd")</td>
-                <td>@item.Type</td>
-                <td>@item.HoursWorked</td>
-                <td>@item.HourlyRate</td>
-                <td>R @item.TotalAmount.ToString("F2")</td>
-                <td>@item.Status</td>
-                <td>
-                    @if (item.Documents.Any())
-                    {
-                        <ul class="list-unstyled">
-                            @foreach (var doc in item.Documents)
-                            {
-                                <li><a href="@doc.FilePath" target="_blank">@doc.FileName</a></li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <span class="text-muted">No documents</span>
-                    }
-                </td>
-                <td>
-                    <form asp-action="Verify" method="post" class="d-inline">
-                        <input type="hidden" name="id" value="@item.Id" />
-                        <button type="submit" class="btn btn-success btn-sm">Verify</button>
-                    </form>
-                    <form asp-action="Reject" method="post" class="d-inline ms-1">
-                        <input type="hidden" name="id" value="@item.Id" />
-                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                    </form>
-                </td>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Hours</th>
+                <th>Rate</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Documents</th>
+                <th>Actions</th>
             </tr>
+            }
+        else
+        {
+            @foreach (var item in Model)
+            {
+                <tr>    
+                    <td>@item.ClaimId</td>
+                    <td>@item.ClaimDate.ToString("yyyy-MM-dd")</td>
+                    <td>@item.Type</td>
+                    <td>@item.HoursWorked</td>
+                    <td>@item.HourlyRate</td>
+                    <td>R @item.TotalAmount.ToString("F2")</td>
+                    <td>@item.Status</td>
+                    <td>
+                        @if (item.Documents != null && item.Documents.Any())
+                        {
+                            <ul class="list-unstyled">
+                                @foreach (var doc in item.Documents)
+                                {
+                                    <li><a href="@doc.FilePath" target="_blank">@doc.FileName</a></li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No documents</span>
+                        }
+                    </td>
+                    <td>
+                        <form asp-action="Verify" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                        </form>
+                        <form asp-action="Reject" method="post" class="d-inline ms-1">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>

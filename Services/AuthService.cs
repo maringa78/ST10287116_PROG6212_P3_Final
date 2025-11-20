@@ -1,25 +1,39 @@
-﻿using ST10287116_PROG6212_POE_P2.Data;    // For ApplicationDbContext
-using ST10287116_PROG6212_POE_P2.Models;  // For User – fixes CS0246
-using Microsoft.EntityFrameworkCore;       // Add this for EF Core LINQ support
-using System.Linq;                        // Add this for LINQ extension methods
+﻿using System.Linq;
+using ST10287116_PROG6212_POE_P2.Data;
+using ST10287116_PROG6212_POE_P2.Models;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Claim = System.Security.Claims.Claim;
 
-namespace ST10287116_PROG6212_POE_P2.Services  // Single definition here
+namespace ST10287116_PROG6212_POE_P2.Services
 {
-    public class AuthService  // No duplicates now
-
+    public class AuthService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _ctx;
+        public AuthService(ApplicationDbContext ctx) => _ctx = ctx;
 
-        public AuthService(ApplicationDbContext context)
+        public User? ValidateUser(string email, string password) =>
+            _ctx.Users.FirstOrDefault(u => u.Email == email && u.PasswordHash == password);
+
+        public async Task SignOutAsync(HttpContext context)
         {
-            _context = context;
+            await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            context.Session.Clear();
         }
 
-        // Fix: Use Set<User>() to get the correct DbSet<User>
-        public User? ValidateUser(string email, string password)
+        public async Task SignInAsync(HttpContext context, User user)
         {
-            // Use proper password hashing in real apps
-            return _context.Set<User>().FirstOrDefault(u => u.Email == email && u.PasswordHash == password);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, $"{user.Name} {user.Surname}"),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            };
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
         }
     }
 }

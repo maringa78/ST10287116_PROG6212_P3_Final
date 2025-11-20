@@ -24,8 +24,8 @@ namespace ST10287116_PROG6212_POE_P2.Areas.Lecturer.Controllers
             if (string.IsNullOrEmpty(userId))
                 return RedirectToAction("Login", "Account");
 
-            var claims = _claimService.GetUserClaims(userId);
-            return View(claims); // View is strongly typed to IEnumerable<Claim>
+            var claims = _claimService.GetForUser(userId);
+            return View(claims); 
         }
     }
 }

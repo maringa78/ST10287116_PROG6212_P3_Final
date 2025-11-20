@@ -1,0 +1,56 @@
+@page
+@model ST10287116_PROG6212_POE_P2.Areas.HR.Pages.Reports.ApprovedModel
+@{
+    ViewData["Title"] = "Approved Claims Report";
+}
+<h2>Approved Claims Report</h2>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto">
+    <label class="form-label">From</label>
+    <input type="date" name="From" value="@Model.From?.ToString("yyyy-MM-dd")" class="form-control" />
+  </div>
+  <div class="col-auto">
+    <label class="form-label">To</label>
+    <input type="date" name="To" value="@Model.To?.ToString("yyyy-MM-dd")" class="form-control" />
+  </div>
+  <div class="col-auto align-self-end">
+    <button class="btn btn-primary" type="submit">Filter</button>
+  </div>
+</form>
+
+<form method="post">
+  <input type="hidden" name="From" value="@Model.From" />
+  <input type="hidden" name="To" value="@Model.To" />
+  <button class="btn btn-secondary mb-3" formaction="?handler=ExportPdf">Export PDF</button>
+</form>
+
+<table class="table table-striped table-sm">
+  <thead>
+    <tr>
+      <th>ClaimId</th>
+      <th>Lecturer Email</th>
+      <th>Hours</th>
+      <th>Rate</th>
+      <th>Total</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  @foreach (var r in Model.Rows)
+  {
+      <tr>
+        <td>@r.ClaimId</td>
+        <td>@r.LecturerEmail</td>
+        <td>@r.Hours</td>
+        <td>@r.Rate.ToString("F2")</td>
+        <td>@r.Total.ToString("F2")</td>
+        <td>@r.Date.ToShortDateString()</td>
+      </tr>
+  }
+  </tbody>
+</table>
+
+<div class="fw-bold">
+  Grand Total: @Model.Rows.Sum(x => x.Total).ToString("F2")
+</div>

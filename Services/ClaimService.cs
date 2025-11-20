@@ -1,118 +1,100 @@
-﻿using ST10287116_PROG6212_POE_P2.Models;
-using ST10287116_PROG6212_POE_P2.Data;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using ST10287116_PROG6212_POE_P2.Data;
+using ST10287116_PROG6212_POE_P2.Models;
 
 namespace ST10287116_PROG6212_POE_P2.Services
 {
     public class ClaimService
     {
-        private readonly ApplicationDbContext _context;
-        public ClaimService(ApplicationDbContext context) => _context = context;
+        private readonly ApplicationDbContext _ctx;
+        public ClaimService(ApplicationDbContext ctx) => _ctx = ctx;
 
-        public int GetMonthlyHoursForUser(int userId, int year, int month)
+        public void Create(Claim claim)
         {
-            return _context.Claims
-                .Where(c => c.LecturerId == userId &&
-                            c.ClaimDate.Year == year &&
-                            c.ClaimDate.Month == month)
+            _ctx.Claims.Add(claim);
+            _ctx.SaveChanges();
+        }
+
+        public IEnumerable<Claim> GetForUser(string? userId)
+        {
+            if (!string.IsNullOrEmpty(userId))
+                return _ctx.Claims.Where(c => c.UserId == userId).ToList();
+            return Enumerable.Empty<Claim>();
+        }
+
+        public IEnumerable<Claim> GetPendingForCoordinator() =>
+            _ctx.Claims.Where(c => c.Status == ClaimStatus.Pending).ToList();
+
+        // ADDED: Used by Coordinator workflow controllers
+        public IEnumerable<Claim> GetPendingClaims() =>
+            _ctx.Claims.Where(c => c.Status == ClaimStatus.Pending)
+                       .Include(c => c.Documents)
+                       .ToList();
+
+        public int GetMonthlyHoursForUser(int lecturerId, int year, int month)
+        {
+            return _ctx.Claims
+                .Where(c => c.LecturerId == lecturerId
+                            && c.ClaimDate.Year == year
+                            && c.ClaimDate.Month == month)
                 .Sum(c => c.HoursWorked);
         }
 
-        public IEnumerable<Claim> GetUserClaims(string userId) =>
-            _context.Claims.Where(c => c.UserId == userId).ToList();
-
-        public IEnumerable<Claim> GetAllClaims(string? search = "")
+        public IEnumerable<Claim> GetVerifiedClaims()
         {
-            var query = _context.Claims.AsQueryable();
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(c => c.ClaimId.Contains(search) || c.Status.ToString().Contains(search));
-            }
-            return query.ToList();
-        }
-
-        public IEnumerable<Claim> GetPendingClaims(string? search = "")
-        {
-            var query = _context.Claims
-                .Where(c => c.Status == ClaimStatus.Pending)
-                .Include(c => c.Documents)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(c => c.ClaimId.Contains(search));
-            }
-            return query.ToList();
-        }
-
-        public IEnumerable<Claim> GetPendingClaims() =>
-            _context.Claims
-                .Where(c => c.Status == ClaimStatus.Pending)
-                .Include(c => c.Documents)
-                .ToList();
-
-        public IEnumerable<Claim> GetVerifiedClaims() =>
-            _context.Claims
+            return _ctx.Claims
                 .Where(c => c.Status == ClaimStatus.Verified)
                 .Include(c => c.Documents)
                 .ToList();
+        }
 
-        public void UpdateStatus(int id, ClaimStatus status)
+        public void UpdateStatus(int claimId, ClaimStatus newStatus)
         {
-            var claim = _context.Claims.Find(id);
+            var claim = _ctx.Claims.FirstOrDefault(c => c.Id == claimId);
             if (claim != null)
             {
-                claim.Status = status;
-                claim.LastUpdated = DateTime.Now;
-                _context.SaveChanges();
+                claim.Status = newStatus;
+                _ctx.SaveChanges();
             }
         }
 
-        public void CreateClaim(Claim claim)
+        internal string? GetUserClaims(string userId)
         {
-            if (!string.IsNullOrWhiteSpace(claim.UserId))
-            {
-                var lecturer = _context.User.FirstOrDefault(u => u.Id.ToString() == claim.UserId);
-                if (lecturer != null)
-                {
-                    claim.HourlyRate = lecturer.HourlyRate;
-                    claim.LecturerId = lecturer.Id;
-                }
-            }
-            claim.TotalAmount = claim.HourlyRate * claim.HoursWorked;
-            claim.Created = DateTime.Now;
-            claim.LastUpdated = DateTime.Now;
-
-            _context.Claims.Add(claim);
-            if (claim.Documents?.Count > 0)
-            {
-                _context.Set<Document>().AddRange(claim.Documents);
-            }
-            _context.SaveChanges();
+            throw new NotImplementedException();
         }
 
-        // HR reports: approved claims summary (CSV-friendly data)
-        public IEnumerable<(string ClaimId, string LecturerEmail, int Hours, decimal Rate, decimal Total, DateTime Date)>
-            GetApprovedClaimsReport(DateTime? from = null, DateTime? to = null)
+        // DTO for approved claims report
+        public record ApprovedClaimRow(string ClaimId, string LecturerEmail, int Hours, decimal Rate, decimal Total, DateTime Date);
+
+        //  Report method used by HR Approved page & ReportController
+        public IEnumerable<ApprovedClaimRow> GetApprovedClaimsReport(DateTime? from, DateTime? to)
         {
-            var q = _context.Claims
-                .Include(c => c.Documents)
+            var query = _ctx.Claims
                 .Where(c => c.Status == ClaimStatus.Approved);
 
-            if (from.HasValue) q = q.Where(c => c.ClaimDate >= from.Value);
-            if (to.HasValue) q = q.Where(c => c.ClaimDate <= to.Value);
+            if (from.HasValue)
+                query = query.Where(c => c.ClaimDate >= from.Value.Date);
+            if (to.HasValue)
+                query = query.Where(c => c.ClaimDate <= to.Value.Date);
 
-            return q.Select(c => new
-            {
-                c.ClaimId,
-                LecturerEmail = _context.Set<User>().Where(u => u.Id.ToString() == c.UserId).Select(u => u.Email).FirstOrDefault(),
-                Hours = c.HoursWorked,
-                Rate = c.HourlyRate,
-                Total = c.TotalAmount,
-                Date = c.ClaimDate
-            })
-            .AsEnumerable()
-            .Select(x => (x.ClaimId, x.LecturerEmail ?? string.Empty, x.Hours, x.Rate, x.Total, x.Date));
+            // Join users to get lecturer email
+            var result = from c in query
+                         join u in _ctx.Users on c.LecturerId equals u.Id
+                         select new ApprovedClaimRow(
+                             c.ClaimId,
+                             u.Email,
+                             c.HoursWorked,
+                             c.HourlyRate,
+                             (c.TotalAmount > 0 ? c.TotalAmount : c.HoursWorked * c.HourlyRate),
+                             c.ClaimDate
+                         );
+
+            return result
+                .OrderBy(r => r.Date)
+                .ThenBy(r => r.ClaimId)
+                .ToList();
         }
     }
 }

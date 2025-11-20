@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ST10287116_PROG6212_POE_P2.Models;
 using ST10287116_PROG6212_POE_P2.Data;
 
 namespace ST10287116_PROG6212_POE_P2.Areas.HR.Controllers
 {
     [Area("HR")]
+    [Authorize(Roles = "HR")]
     public class UserController : Controller
     {
         private readonly ApplicationDbContext _context;
